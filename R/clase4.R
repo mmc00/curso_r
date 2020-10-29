@@ -3,7 +3,7 @@ library(tidyverse)
 library(readxl)
 library(readr)
 library(vroom)
-
+library(rgtap)
 # Introduccion funciones
 
 # paramentros
