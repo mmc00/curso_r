@@ -66,8 +66,8 @@ base_2_fix <- carga_pib(path_base = "data/pib_encadenado.xlsx", pib_name = "PIB_
 "mmc00/curso_r"
 
 # creacion de script dentro de folder (tareas)
-# buscar los datos del pib
-# counsumo
+# buscar los datos del pib (carpeta datos)
+# consumo
 # inversion
 # exportaciones
 # importaciones
