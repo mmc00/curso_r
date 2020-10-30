@@ -60,7 +60,7 @@ base_2_fix <- carga_pib(path_base = "data/pib_encadenado.xlsx", pib_name = "PIB_
 
 # GITHUB
 
-# Prueba github
+# Prueba 1
 
 # GITHUB
 "mmc00/curso_r"
