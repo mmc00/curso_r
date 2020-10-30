@@ -77,7 +77,7 @@ base_2_fix <- carga_pib(path_base = "data/pib_encadenado.xlsx", pib_name = "PIB_
 
 
 
-
+# Prueba 2
 
 
 #papote malote
