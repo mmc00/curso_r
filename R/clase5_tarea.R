@@ -11,15 +11,23 @@ pib_desagregado <- read_xlsx("data/pib_desagregado.xlsx", skip = 4) %>%
   rename("variable" = "...1") 
   
 #transponer la tabla
-  pib_transpuesto <- data.frame(t(pib_desagregado[-1])) %>% 
-  rename("G"="X1") %>% 
-  rename("C"="X2") %>% 
-  rename("X"="X3") %>% 
-  rename("M"="X4") %>% 
-    
-    #balanza comercial
+  pib_transpuesto <- pib_desagregado %>% 
+    pivot_longer(cols = paste0(1991:2021), names_to = "fecha" ,
+                 values_to = "values") %>% 
+    mutate(categorias = case_when(
+      variable == "Gasto de consumo final (P3-P4)" ~ "gasto", 
+      variable == "Formación bruta de capital fijo (P51g)" ~ "inversion",
+      variable == "EXPORTACIONES DE BIENES Y SERVICIOS (P6)" ~ "export",
+      variable == "IMPORTACIONES DE BIENES Y SERVICIOS (P7)" ~ "import",
+      TRUE ~ "others" )) %>%
+    group_by(categorias, fecha) %>% 
+    summarise(pib = sum(values, .groups = "drop"))
+  
+  
+  
+  #balanza comercial
     mutate(balanza=X-M) %>% 
-    mutate(pib=G+C+balanza)
+    mutate(pib=G+C+balanza)  
 
 
   
