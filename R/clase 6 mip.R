@@ -1,9 +1,5 @@
-library(tidyverse)
 library(readxl)
+MIP77 <- read_excel("data/MIP77.xlsx", skip=6) 
+View(MIP77)
 
-MIP_77 <-read_xlsx("C:\Users\Sebastian\Documents\GitHub\curso_rcdata\MIP77.xlsx")
-
-# Se carga la base y se quitan las primeras 7 filas
-MIP_77 <- read_xlsx("MIP77.xlsx", skip = 7) 
-  
   
