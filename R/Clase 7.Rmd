@@ -1,0 +1,19 @@
+---
+title: "Clase 7"
+author: "grupo experimental"
+date: "26/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Carga de la matriz 
+Este es el procedimiento para transformar la matriz en formato largo
+
+```{r}
+miplong <- readRDS("data/mip_long77.rds")
+```
+
+
