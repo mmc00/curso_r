@@ -25,7 +25,7 @@ mip_larg <- mip77 %>%
 
 # Convertir la matriz en 3x3
 
-mip_long_3x3 <- mip_long %>% 
+mip_long_3x3 <- mip_larg %>% 
   mutate(sector_prod = case_when(
     producto == "Arroz" ~"s1", producto == "Otros cereales" ~"s1" , 
     producto == "Cultivos alimentarios" ~"s1", producto == "Cultivos no alimentarios" ~"s1", 
@@ -69,7 +69,10 @@ mip_long_3x3 <- mip_long %>%
     producto == "Arroz" ~"s3",  producto == "Arroz" ~"s3", 
     TRUE ~ "others"
   )) %>% 
-
+  group_by(demanda, sector_prod) %>% 
+  mutate(values = as.numeric(values)) %>% 
+  summarise(values = sum(values, na.rm = T), .groups = "drop") %>% 
+  
 mutate(sector_dem = case_when(
   demanda == "Arroz" ~"s1", demanda == "Otros cereales" ~"s1" , 
   demanda == "Cultivos alimentarios" ~"s1", demanda == "Cultivos no alimentarios" ~"s1", 
@@ -112,7 +115,11 @@ mutate(sector_dem = case_when(
   demanda == "Arroz" ~"s3",  demanda == "Arroz" ~"s3",
   demanda == "Arroz" ~"s3",  demanda == "Arroz" ~"s3", 
   TRUE ~ "others"
-)) 
+)) %>% 
+  group_by(sector_prod, sector_dem) %>%  
+  summarise(values = sum(values, na.rm = T), .groups = "drop") %>% 
+  pivot_wider(names_from = "sector_prod", values_from = "values")
+  
   
   #gyroup_by(sector_prod, values) %>%
   #summarise(values=sum(values)) %>% 
