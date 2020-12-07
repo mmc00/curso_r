@@ -18,9 +18,10 @@ primeras filas y se conserva la matriz actividad - actividad
 library(tidyverse)
 library(readxl)
 library(dplyr)
+library(here)
 
-mip144 <- read_excel("data/mip144.xlsx",
-                     skip=9) %>% 
+
+mip144 <- read_excel(here("data", "mip144.xlsx"), skip=9) %>% 
   
   select(-1) %>% 
   slice (1:150) 
@@ -31,16 +32,22 @@ Se cambian nombres de columnas y convierte en formato long
 
 ```{r}
 mip144long <- mip144 %>% 
+  
   rename("actividad" = "Actividad / Actividad", "dem_int"="...139", "cons_h"="...140", "cons_g"="...141", "fk"="...142", "ve"="...143", "x"="...144", "d_tot"="...145", "ut"="...146") %>% 
-  pivot_longer(cols= -actividad, names_to = "demanda", values_to = "values") %>%
+  
+pivot_longer(cols= -actividad, names_to = "demanda", values_to = "values")
 ```
 
-Ahora se convierte en una matriz 3x3, se carga matriz con etiquetas y luego
-se une (joint) con la matriz long catalogando los sectores en: s1, s2 y s3.
-
+Se carga matriz con etiquetas
 ```{r}
-mip3x3 <- left_join(mip144long, mip144sectores, by = c("actividad")) %>% 
-  # group_by(demanda, sector)
+mip144sec <- read_excel(here("data", "mip144sectores.xlsx")) 
+
+```
+
+se une (join) con la matriz long catalogando los sectores en: s1, s2 y s3.
+```{r}
+mip3x3 <- left_join(mip144long, mip144sec, by = c("actividad")) %>% 
+  #group_by(actividad)
   
 ```
 
