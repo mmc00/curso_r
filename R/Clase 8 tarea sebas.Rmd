@@ -11,8 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Matriz Insumo Producto 144x144
-Se ejecuta tidiverse, readxls y dplyr y se carga la mip144. luego se eliminan las
-primeras filas y se conserva la matriz actividad - actividad
+Se ejecuta tidiverse, readxls y dplyr y se carga la mip144. Se cambia de nombre de columnas. Luego se elimina la primera columna
 
 ```{r}
 library(tidyverse)
@@ -23,17 +22,19 @@ library(here)
 
 mip144 <- read_excel(here("data", "mip144.xlsx"), skip=9) %>% 
   
+  slice (1:136, 140, 142, 143, 148) %>% 
+  rename("codigo"="...1", "actividad" = "Actividad / Actividad", "dem_int"="...139", "cons_h"="...140", "cons_g"="...141", "fk"="...142", "ve"="...143", "x"="...144", "d_tot"="...145", "ut"="...146") %>% 
+  mutate(actividad = ifelse(is.na(actividad), codigo, actividad)) %>% 
   select(-1) %>% 
-  slice (1:150) 
+  select(-dem_int, -d_tot, -ut)
 
 ```
 
-Se cambian nombres de columnas y convierte en formato long
+Se convierte en formato long
+
 
 ```{r}
 mip144long <- mip144 %>% 
-  
-  rename("actividad" = "Actividad / Actividad", "dem_int"="...139", "cons_h"="...140", "cons_g"="...141", "fk"="...142", "ve"="...143", "x"="...144", "d_tot"="...145", "ut"="...146") %>% 
   
 pivot_longer(cols= -actividad, names_to = "demanda", values_to = "values")
 ```
@@ -45,9 +46,37 @@ mip144sec <- read_excel(here("data", "mip144sectores.xlsx"))
 ```
 
 se une (join) con la matriz long catalogando los sectores en: s1, s2 y s3.
+
+Agrupar por sectores de la oferta.
+
 ```{r}
 mip3x3 <- left_join(mip144long, mip144sec, by = c("actividad")) %>% 
-  #group_by(actividad)
+  mutate(sector = case_when(
+    is.na(sector) & actividad == "Valor Agregado Bruto Economía Total"~"va",
+    is.na(sector) & actividad == "Subsidios a los productos"~"sub",
+    is.na(sector) & actividad == "Impuestos sobre productos"~"imp",
+    is.na(sector) & actividad == "Total de usos de origen importado de la Economía Total"~"m",
+    TRUE~sector)) %>% 
   
+group_by(sector, demanda) %>% 
+  summarise(values = sum(values), .groups = "drop")
+```
+
+Se agrupa por sectores de la demanda 
+```{r}
+mip3x3r <- mip3x3 %>%
+  rename("actividad" = "demanda", "oferta" = "sector") %>% 
+  left_join(mip144sec, by = c("actividad")) %>% 
+  mutate(sector = case_when(
+    is.na(sector) & actividad == "fk"~"fk",
+    is.na(sector) & actividad == "cons_h"~"cons_h",
+    is.na(sector) & actividad == "cons_g"~"cons_g",
+    is.na(sector) & actividad == "ve"~"ve",
+    is.na(sector) & actividad == "x"~"x",
+    TRUE~sector)) %>% 
+  
+group_by(sector, oferta) %>% 
+  summarise(values = sum(values), .groups = "drop") %>% 
+  pivot_wider(names_from = "sector", values_from = "values")
 ```
 
