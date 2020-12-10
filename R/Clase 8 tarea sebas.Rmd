@@ -65,7 +65,7 @@ group_by(sector, demanda) %>%
 Se agrupa por sectores de la demanda 
 ```{r}
 mip3x3r <- mip3x3 %>%
-  rename("actividad" = "demanda", "oferta" = "sector") %>% 
+  rename("actividad" = "demanda", "oferta" = "sector") %>%
   left_join(mip144sec, by = c("actividad")) %>% 
   mutate(sector = case_when(
     is.na(sector) & actividad == "fk"~"fk",
@@ -74,9 +74,134 @@ mip3x3r <- mip3x3 %>%
     is.na(sector) & actividad == "ve"~"ve",
     is.na(sector) & actividad == "x"~"x",
     TRUE~sector)) %>% 
+# Agregar 0 en los valores no tradicionales de IO
+  mutate(values = case_when(
+    oferta == "imp" & sector %in% c("cons_h", "cons_g", "fk", "ve", "x") ~ 0,
+    oferta == "sub" & sector %in% c("cons_h", "cons_g", "fk", "ve", "x") ~ 0,
+    oferta == "m" & sector %in% c("cons_h", "cons_g", "fk", "ve", "x") ~ 0,
+    oferta == "va" & sector %in% c("cons_h", "cons_g", "fk", "ve", "x") ~ 0,
+    TRUE ~ values
+  )) %>% 
   
+    
 group_by(sector, oferta) %>% 
   summarise(values = sum(values), .groups = "drop") %>% 
   pivot_wider(names_from = "sector", values_from = "values")
+```
+
+Ordenar 
+
+```{r}
+mip_or <- mip3x3r %>% 
+  slice(3:5, 2, 1, 6, 7) %>% 
+  select(oferta, s1, s2, s3, cons_h, cons_g, fk, ve, x)
+```
+
+Verificación de totales
+
+```{r}
+mip_or2 <- mip_or %>%
+  mutate(Total = s1 + s2 + s3 + cons_h + cons_g + fk + ve + x) %>% 
+  mutate(Total = case_when(
+    oferta %in% c("m", "imp", "sub", "va") ~ 0,
+    TRUE ~ Total
+  ))
+
+total_demanda <- mip_or %>% 
+  select(-oferta) %>% 
+  rowSums() %>% 
+  data.frame()
+
+total_oferta <- mip_or %>% 
+  select(-oferta) %>% 
+  summarise_all(sum) %>% 
+  t() %>% 
+  data.frame()
+```
+
+# Matriz de transacciones intermedias
+
+
+## Lado de la demanda
+
+Di_d: Transacciones intermedias entre industrias domesticas
+
+Df_d: Transacciones de los agentes -locales- a las industrias domesticas (demanda) 
+
+Did + Df_d = Dt
+
+## Lado de la oferta
+
+Oi_d: Transacciones intermedias
+M: Importaciones
+
+va: Valor agregado
+
+Oi_d  + M + TS + va = Ot
+
+## Introducción a leontief
+
+*Dt = Ot
+
+*Cada industria produce solo un producto, es un producto homogéneo
+
+*Supone una tecnología constante
+
+Producto Nacional Bruto - T
+
+Di + Df = T
+
+Df = T - Di
+
+Di = a_d * T
+
+5 = (5/ 10) * 10
+
+a_d: matriz de coeficientes intermedios domesticos
+
+Df = T - a_d * T
+
+Df = T * (I - a_d)
+
+Df * (I - a_d)^(-1) = T
+
+B = (I - a_d)^(-1)
+
+B: Matriz de Loentief
+
+#### Df * B = T
+
+Ecuación organica
+```{r}
+Di <- mip_or2 %>% 
+  filter(oferta %in% paste0("s", 1:3)) %>% 
+  select(paste0("s", 1:3)) %>% 
+  as.matrix()
+
+Total <- mip_or2 %>% 
+  filter(oferta %in% paste0("s", 1:3)) %>% 
+  select(Total) %>% 
+  as.matrix()
+
+i_t <- (1/Total)
+
+rowSums(Di) + Df
+Total
+####
+i_t <- as.numeric(i_t)
+i_t_diag <- diag(i_t, 3, 3)
+a_d <- Di %*% i_t_diag
+
+Df <- mip_or2 %>% 
+  mutate(df = cons_h + cons_g + fk + ve + x) %>% 
+  filter(oferta %in% paste0("s", 1:3)) %>% 
+  select(df) %>% 
+  as.matrix()
+
+I <- diag(1, 3, 3)
+#####
+B <- solve(I - a_d)
+B %*% Df
+Total
 ```
 
